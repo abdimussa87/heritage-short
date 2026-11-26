@@ -9,7 +9,7 @@ A pipeline that turns one file, `storyboard.json`, into a 60–90 second narrate
 You need [uv](https://docs.astral.sh/uv/) and FFmpeg (with libass, which most builds have).
 
 ```
-git clone <this repo> && cd <repo>
+git clone https://github.com/abdimussa87/heritage-short.git && cd heritage-short
 make setup
 make film
 ```
