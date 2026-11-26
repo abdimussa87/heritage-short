@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/heritage-short/storyboard.schema.json",
+  "title": "Heritage Short storyboard",
+  "description": "The contract between every pipeline stage. Each stage reads this file and writes only to outputs/.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "title", "logline", "language", "audience", "intent", "style", "characters", "models", "voice", "shots", "music", "end_card", "mix"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "version": {"const": 1},
+    "title": {"type": "string", "minLength": 1},
+    "logline": {"type": "string", "minLength": 1, "description": "One sentence that sums up the story."},
+    "language": {"type": "string", "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$", "description": "BCP-47 code of the narration language, e.g. am, om, so, ti."},
+    "audience": {"type": "string", "minLength": 1},
+    "intent": {"type": "string", "minLength": 1, "description": "What the audience should feel or understand at the end."},
+
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["block"],
+      "properties": {
+        "block": {"type": "string", "minLength": 1, "description": "Fixed look text appended to every image prompt."},
+        "negative": {"type": "string"}
+      }
+    },
+
+    "characters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "reference_prompt", "seed", "real_person"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "name": {"type": "string"},
+          "description": {"type": "string", "minLength": 1, "description": "Fixed appearance text added to every prompt that shows this character."},
+          "reference_prompt": {"type": "string", "minLength": 1, "description": "Prompt for the character reference sheet."},
+          "seed": {"$ref": "#/$defs/seed"},
+          "real_person": {"type": "boolean", "description": "True if this depicts or voices a real person. Then consent_id is required and must appear in ETHICS.md."},
+          "consent_id": {"type": "string", "pattern": "^CONSENT-[A-Za-z0-9-]+$"}
+        },
+        "if": {"properties": {"real_person": {"const": true}}},
+        "then": {"required": ["consent_id"]}
+      }
+    },
+
+    "models": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "tts", "image", "video", "music"],
+      "properties": {
+        "text": {"$ref": "#/$defs/model"},
+        "tts": {"$ref": "#/$defs/model"},
+        "image": {"$ref": "#/$defs/model"},
+        "video": {"$ref": "#/$defs/model"},
+        "music": {"$ref": "#/$defs/model"}
+      }
+    },
+
+    "voice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "style_prompt"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "description": "Prebuilt TTS voice name."},
+        "style_prompt": {"type": "string", "description": "Plain-language delivery direction, e.g. 'Read slowly and warmly, like an elder telling a story'."}
+      }
+    },
+
+    "shots": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "reason", "duration_s", "shot_size", "characters", "image_prompt", "seed", "narration"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "beat": {"type": "string", "description": "What changes in the story here."},
+          "reason": {"type": "string", "minLength": 1, "description": "Why this shot exists, in one sentence."},
+          "duration_s": {"type": "number", "minimum": 2, "maximum": 15, "description": "Planned length. Assembly extends it if the narration is longer."},
+          "shot_size": {"enum": ["extreme_wide", "wide", "medium", "medium_close_up", "close_up", "extreme_close_up", "insert"]},
+          "characters": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+          "image_prompt": {"type": "string", "minLength": 1},
+          "seed": {"$ref": "#/$defs/seed"},
+          "motion": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["enabled"],
+            "properties": {
+              "enabled": {"type": "boolean", "description": "Animate with the video model. If false, or if no clip exists, assembly uses a Ken Burns move on the keyframe."},
+              "prompt": {"type": "string", "description": "Motion and camera only. The keyframe already holds the subject."},
+              "seed": {"$ref": "#/$defs/seed"}
+            }
+          },
+          "kenburns": {"enum": ["in", "out", "left", "right", "up", "down", "none"]},
+          "vertical_fit": {"enum": ["crop", "blur_pad"], "description": "How the 16:9 picture becomes 9:16."},
+          "vertical_x": {"type": "number", "minimum": 0, "maximum": 1, "description": "Horizontal centre of the 9:16 crop, 0 = left edge, 1 = right edge."},
+          "narration": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text"],
+            "properties": {
+              "text": {"type": "string", "description": "Narration in the film's language. Empty string = no narration on this shot."},
+              "subtitle_en": {"type": "string", "description": "English subtitle. Filled by `make translate` if empty, then reviewed by a human."},
+              "pronunciation_note": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "music": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caption", "duration_s", "seeds"],
+      "properties": {
+        "caption": {"type": "string", "minLength": 1, "description": "Style, mood, instruments, texture. No tempo or key here."},
+        "bpm": {"type": "integer", "minimum": 40, "maximum": 200},
+        "key": {"type": "string"},
+        "duration_s": {"type": "number", "minimum": 10, "maximum": 240},
+        "instrumental": {"type": "boolean", "default": true},
+        "lyrics": {"type": "string"},
+        "seeds": {"type": "array", "items": {"$ref": "#/$defs/seed"}, "minItems": 1, "maxItems": 8, "description": "One candidate per seed."},
+        "chosen_seed": {"$ref": "#/$defs/seed", "description": "The candidate used in the film. Unset = placeholder pad."},
+        "cues": {
+          "type": "array",
+          "description": "Spotting notes: where music starts, builds and ends.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["at_shot", "note"],
+            "properties": {
+              "at_shot": {"$ref": "#/$defs/id"},
+              "note": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "end_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lines", "duration_s"],
+      "properties": {
+        "lines": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "duration_s": {"type": "number", "minimum": 2, "maximum": 6}
+      }
+    },
+
+    "mix": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lead_in_s": {"type": "number", "minimum": 0, "maximum": 5, "default": 1.0},
+        "voice_head_s": {"type": "number", "minimum": 0, "maximum": 2, "default": 0.3},
+        "voice_tail_s": {"type": "number", "minimum": 0, "maximum": 3, "default": 0.7},
+        "music_gain_db": {"type": "number", "minimum": -40, "maximum": 0, "default": -8},
+        "duck": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "threshold": {"type": "number", "default": 0.02},
+            "ratio": {"type": "number", "default": 6},
+            "attack_ms": {"type": "number", "default": 300},
+            "release_ms": {"type": "number", "default": 1500}
+          }
+        },
+        "loudness_lufs": {"type": "number", "default": -14},
+        "true_peak_db": {"type": "number", "default": -1}
+      }
+    }
+  },
+
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,31}$"},
+    "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "id"],
+      "properties": {
+        "provider": {"enum": ["gemini", "cloudflare", "kaggle", "local"]},
+        "id": {"type": "string", "minLength": 1},
+        "params": {"type": "object"},
+        "license": {"type": "string"}
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "title": "Fixture",
+  "logline": "A test storyboard used only by the test suite.",
+  "language": "am",
+  "audience": "Tests",
+  "intent": "Prove the pipeline builds.",
+  "style": {"block": "warm hand-painted look, soft light"},
+  "characters": [
+    {"id": "elder", "description": "an old woman in a white shawl", "reference_prompt": "character sheet, front and side views", "seed": 7, "real_person": false}
+  ],
+  "models": {
+    "text": {"provider": "gemini", "id": "gemini-2.5-flash"},
+    "tts": {"provider": "gemini", "id": "gemini-2.5-flash-preview-tts"},
+    "image": {"provider": "cloudflare", "id": "@cf/black-forest-labs/flux-1-schnell"},
+    "video": {"provider": "kaggle", "id": "Wan-AI/Wan2.2-TI2V-5B-Diffusers"},
+    "music": {"provider": "kaggle", "id": "ACE-Step/Ace-Step1.5"}
+  },
+  "voice": {"name": "Kore", "style_prompt": "Read slowly and warmly."},
+  "shots": [
+    {"id": "s01", "reason": "Where we are.", "duration_s": 3, "shot_size": "wide", "characters": [], "image_prompt": "a hillside village at dawn", "seed": 1,
+     "narration": {"text": "line one", "subtitle_en": "This is the first line of the test narration, long enough to wrap."}},
+    {"id": "s02", "reason": "Who she is.", "duration_s": 3, "shot_size": "close_up", "characters": ["elder"], "image_prompt": "her face", "seed": 2,
+     "motion": {"enabled": true, "prompt": "she slowly turns her head, camera pushes in", "seed": 5},
+     "narration": {"text": "line two", "subtitle_en": "Second line."}},
+    {"id": "s03", "reason": "A pause.", "duration_s": 2, "shot_size": "insert", "characters": [], "image_prompt": "a clay pot", "seed": 3,
+     "narration": {"text": ""}}
+  ],
+  "music": {"caption": "soft krar and strings, gentle, warm", "duration_s": 30, "seeds": [11, 12, 13]},
+  "end_card": {"lines": ["Made with AI", "test"], "duration_s": 2},
+  "mix": {}
+}

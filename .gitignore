@@ -1,0 +1,17 @@
+# secrets
+.env
+kaggle.json
+*.key
+
+# python
+__pycache__/
+.venv/
+.pytest_cache/
+*.pyc
+
+# scratch work that is not part of a run
+outputs/_cache/
+outputs/jobs/*/bundle/
+
+# local tool state
+.revyl/
